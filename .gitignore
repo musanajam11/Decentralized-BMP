@@ -1,0 +1,49 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+dist/
+*.db
+
+# === C++ Build Artifacts ===
+BeamMP-Launcher/build/
+BeamMP-Server/build/
+*.obj
+*.lib
+*.pdb
+*.ilk
+*.exp
+*.iobj
+*.ipdb
+*.tlog
+*.recipe
+*.log
+
+# === vcpkg cache (large, regenerable) ===
+vcpkg/buildtrees/
+vcpkg/downloads/
+vcpkg/packages/
+
+# === IDE / Editor ===
+.vs/
+.vscode/
+*.suo
+*.user
+*.sln.docstates
+
+# === OS ===
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# === Docker ===
+backend/data/
+backend/builds/
+releases/**/backend/data/
+releases/**/backend/builds/
+
+# === Secrets ===
+.env
+!.env.example

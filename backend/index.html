@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeamMP Backend</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --surface2: #222240;
+  --accent: #6c5ce7;
+  --accent-hover: #7f71f0;
+  --green: #00b894;
+  --red: #e74c3c;
+  --orange: #f39c12;
+  --text: #e8e8f0;
+  --text-dim: #8888aa;
+  --border: #2a2a4a;
+  --radius: 10px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* NAV */
+.navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.patreon-link {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 12px;
+  transition: color 0.15s;
+}
+.patreon-link:hover { color: #ff424d; }
+.patreon-link svg { flex-shrink: 0; }
+.navbar .logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 40px;
+  letter-spacing: -0.5px;
+}
+.navbar .logo span { color: var(--text); }
+.nav-links { display: flex; gap: 4px; flex: 1; }
+.nav-links button {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  padding: 8px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.nav-links button:hover { color: var(--text); background: var(--surface2); }
+.nav-links button.active { color: var(--accent); background: rgba(108,92,231,0.12); }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-right .user-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.nav-right .user-badge.adm { color: var(--accent); background: rgba(108,92,231,0.15); }
+.nav-right .user-badge.user { color: var(--green); background: rgba(0,184,148,0.15); }
+.nav-right button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.nav-right button:hover { border-color: var(--accent); color: var(--text); }
+.nav-right .login-btn {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* LAYOUT */
+.container { max-width: 1100px; margin: 0 auto; padding: 30px 24px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* CARDS */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 30px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+}
+.stat-card .label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.stat-card .value { font-size: 32px; font-weight: 700; }
+.stat-card .value.online { color: var(--green); }
+.stat-card .value.number { color: var(--accent); }
+
+/* CHARTS */
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.chart-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 12px; font-weight: 500; }
+.chart-card canvas { width: 100%; height: 140px; display: block; }
+
+/* SECTION */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.section h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.section-info { display: flex; gap: 30px; flex-wrap: wrap; }
+.section-info .info-item { display: flex; flex-direction: column; gap: 2px; }
+.section-info .info-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.section-info .info-value { font-size: 15px; color: var(--text); }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(42,42,74,0.5);
+  font-size: 14px;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(108,92,231,0.04); }
+.empty-row {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px 14px !important;
+}
+
+/* BADGES */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-green { background: rgba(0,184,148,0.15); color: var(--green); }
+.badge-purple { background: rgba(108,92,231,0.15); color: var(--accent); }
+.badge-orange { background: rgba(243,156,18,0.15); color: var(--orange); }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-danger { background: rgba(231,76,60,0.15); color: var(--red); }
+.btn-danger:hover { background: rgba(231,76,60,0.25); }
+.btn-outline { background: none; border: 1px solid var(--border); color: var(--text-dim); }
+.btn-outline:hover { border-color: var(--accent); color: var(--text); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* FORMS */
+.form-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.form-group input, .form-group select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  min-width: 180px;
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+
+/* LOGIN */
+.login-box {
+  max-width: 360px;
+  margin: 60px auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+}
+.login-box h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: var(--accent);
+}
+.login-box .form-group { margin-bottom: 16px; width: 100%; }
+.login-box .form-group input { width: 100%; min-width: unset; }
+.login-box .btn { width: 100%; justify-content: center; margin-top: 8px; padding: 10px; }
+.login-error {
+  color: var(--red);
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 12px;
+  min-height: 20px;
+}
+
+/* KEY DISPLAY */
+.key-display {
+  background: var(--bg);
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  padding: 14px;
+  margin-top: 12px;
+  display: none;
+}
+.key-display .key-label {
+  font-size: 11px;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.key-display code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 14px;
+  word-break: break-all;
+  user-select: all;
+  color: var(--text);
+}
+
+/* COPY BUTTON */
+.copy-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-left: 8px;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--text); }
+.copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  min-width: 340px;
+  max-width: 420px;
+}
+.modal h3 {
+  margin-bottom: 18px;
+  color: var(--accent);
+}
+.modal .form-group { margin-bottom: 14px; width: 100%; }
+.modal .form-group input, .modal .form-group select { width: 100%; min-width: unset; }
+.modal .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* BACKEND SWITCHER */
+.backend-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(108,92,231,0.1);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-right: 8px;
+}
+.backend-indicator:hover { background: rgba(108,92,231,0.2); color: var(--text); border-color: var(--accent); }
+.backend-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.backend-indicator .dot.offline { background: var(--red); }
+
+.saved-backends-list { margin: 12px 0; max-height: 200px; overflow-y: auto; }
+.saved-backend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: 13px;
+}
+.saved-backend-item:hover { background: var(--surface2); }
+.saved-backend-item.current { color: var(--accent); font-weight: 600; }
+.saved-backend-item .be-url { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-backend-item .be-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; }
+.saved-backend-item.current .be-dot { background: var(--green); }
+.saved-backend-item .be-remove {
+  background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 0 4px;
+  opacity: 0.5; transition: opacity 0.12s;
+}
+.saved-backend-item .be-remove:hover { opacity: 1; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 13px;
+  z-index: 1000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.25s ease;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+
+/* SERVER DETAIL MODAL */
+.server-modal { max-width: 640px; width: 90vw; max-height: 80vh; overflow-y: auto; }
+.server-modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.server-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; padding: 16px; background: var(--bg); border-radius: 6px; }
+.server-detail-section { margin-bottom: 16px; }
+.server-desc { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-top: 6px; font-size: 14px; min-height: 40px; white-space: pre-wrap; }
+.server-mod-list { margin-top: 6px; max-height: 300px; overflow-y: auto; }
+.mod-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 4px; font-size: 13px; }
+.mod-item .mod-name { font-family: 'Consolas', 'Courier New', monospace; color: var(--text); word-break: break-all; }
+.server-player-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.player-tag { background: rgba(108,92,231,0.12); color: var(--accent); padding: 3px 10px; border-radius: 12px; font-size: 12px; }
+tr[onclick] { cursor: pointer; }
+tr[onclick]:hover td { background: rgba(108,92,231,0.08); }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .navbar { padding: 0 12px; }
+  .navbar .logo { margin-right: 16px; font-size: 17px; }
+  .nav-links button { padding: 8px 12px; font-size: 13px; }
+  .container { padding: 16px 12px; }
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-row { flex-direction: column; }
+  .form-group input, .form-group select { min-width: unset; width: 100%; }
+  .modal { min-width: unset; width: 90vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo">Beam<span>MP</span> <span style="color:#e53935;font-size:0.6em;font-weight:700">DDOS EDITION</span></div>
+  <div class="nav-links" id="navLinks" style="display:none">
+    <button class="active" onclick="showPage('status')">Status</button>
+    <button onclick="showPage('servers')">Servers</button>
+    <button onclick="showPage('download')">Download</button>
+  </div>
+  <a class="patreon-link" href="https://www.patreon.com/BeamMP/membership?vanity=BeamMP" target="_blank" rel="noopener">
+    <svg width="16" height="16" viewBox="0 0 1080 1080" fill="#ff424d"><path d="M1050.93 421.38C1050.93 225.64 891.81 66.52 696.07 66.52C500.33 66.52 341.21 225.64 341.21 421.38C341.21 617.12 500.33 776.24 696.07 776.24C891.81 776.24 1050.93 617.12 1050.93 421.38Z"/><path d="M29.07 1013.48H168.35V66.52H29.07V1013.48Z"/></svg>
+    Support the official BeamMP
+  </a>
+  <div class="backend-indicator" id="backendIndicator" onclick="openBackendSwitcher()" title="Switch backend">
+    <span class="dot" id="backendDot"></span>
+    <span id="backendLabel">this backend</span>
+  </div>
+  <div class="nav-right" id="navRight">
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- GATE: Login required screen (shown when not logged in) -->
+<div id="loginGate">
+  <div class="login-box">
+    <h2 id="authTitle">Login</h2>
+    <img src="https://c.tenor.com/HvcPFxb3ofMAAAAC/tenor.gif" alt="" style="display:block;margin:0 auto 16px;max-width:120px;border-radius:8px">
+    <div class="login-error" id="loginError"></div>
+
+    <!-- Login Form -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUser" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      <div style="margin-top:12px;text-align:center">
+        <a href="#" onclick="toggleRegister(true);return false" style="color:var(--accent);font-size:.88em">Have a registration key? Create an account</a>
+      </div>
+    </div>
+
+    <!-- Register Form (hidden by default) -->
+    <div id="registerForm" style="display:none">
+      <div class="form-group">
+        <label>Registration Key</label>
+        <input type="text" id="regKey" placeholder="Paste your key here" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Choose Username</label>
+        <input type="text" id="regUser" placeholder="3-32 chars: letters, numbers, - _" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+      <div id="regResult" style="display:none;margin-top:14px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius)">
+        <div style="color:var(--green);font-weight:600;margin-bottom:6px">Account Created!</div>
+        <div style="font-size:.9em;color:var(--text-dim);margin-bottom:8px">Save your password — you can change it after logging in.</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="password" id="regPassword" readonly style="flex:1;min-width:0;font-size:.9em;font-family:monospace;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;outline:none">
+          <button class="btn btn-outline btn-sm" onclick="var p=document.getElementById('regPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'Show':'Hide'">Show</button>
+          <button class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('regPassword').value);showToast('Password copied','success')">Copy</button>
+        </div>
+      </div>
+      <div style="margin-top:12px;text-align:center">
+        <a href="#" onclick="toggleRegister(false);return false" style="color:var(--accent);font-size:.88em">Back to login</a>
+      </div>
+    </div>
+
+    <div id="loginStatus" style="margin-top:16px;text-align:center;font-size:13px;color:var(--text-dim)">
+      <span id="loginBackendStatus">Checking...</span>
+    </div>
+  </div>
+</div>
+
+<!-- GATED CONTENT: only visible after login -->
+<div id="gatedContent" style="display:none">
+
+<!-- STATUS PAGE -->
+<div class="page active" id="page-status">
+  <div class="card-grid">
+    <div class="stat-card">
+      <div class="label">Backend</div>
+      <div class="value online" id="st-status">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Active Servers</div>
+      <div class="value number" id="st-servers">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Players Online</div>
+      <div class="value number" id="st-players">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Registered Users</div>
+      <div class="value number" id="st-users">--</div>
+    </div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Players Online</h3>
+      <canvas id="chart-players"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>API Requests / min</h3>
+      <canvas id="chart-requests"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Heartbeats / min</h3>
+      <canvas id="chart-heartbeats"></canvas>
+    </div>
+  </div>
+  <div class="section" style="position:relative;overflow:hidden">
+    <h2>System Info</h2>
+    <div class="section-info">
+      <div class="info-item">
+        <span class="info-label">Uptime</span>
+        <span class="info-value" id="st-uptime">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Launcher Version</span>
+        <span class="info-value" id="st-launcher-ver">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Server Version</span>
+        <span class="info-value" id="st-server-ver">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Backend Version</span>
+        <span class="info-value" id="st-backend-ver">--</span>
+      </div>
+    </div>
+    <img src="https://media.discordapp.net/stickers/1488245100373868746.webp?size=160&quality=lossless" alt="" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);height:140px;width:auto">
+  </div>
+</div>
+
+<!-- DOWNLOAD PAGE -->
+<div class="page" id="page-download">
+  <div class="section" id="downloads-section">
+    <h2>📦 Patching &amp; Downloads</h2>
+    <p style="color:var(--text-dim);margin-bottom:16px;font-size:.93em;line-height:1.6">
+      Download the patched builds below and place them in the correct locations to connect to this backend.
+      Each card shows exactly where the file belongs on your system.
+    </p>
+
+    <!-- Client Patching Guide -->
+    <div id="client-patch-area">
+      <h3 style="margin:20px 0 10px;font-size:1.05em">🎮 Client Patch <span style="font-size:.8em;color:var(--text-dim);font-weight:400">— Play on this backend</span></h3>
+      <p style="color:var(--text-dim);font-size:.88em;line-height:1.6;margin-bottom:14px">
+        Replace your existing BeamMP launcher with the patched version below.
+        It is pre-configured to connect to this backend instead of the official servers. The mod is automatically downloaded by the launcher.
+      </p>
+      <div id="clientBuildsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Server Setup Guide -->
+    <div id="server-patch-area" style="margin-top:28px">
+      <h3 style="margin:0 0 10px;font-size:1.05em">🖥️ Server Setup <span style="font-size:.8em;color:var(--text-dim);font-weight:400">— Host a game server</span></h3>
+      <p style="color:var(--text-dim);font-size:.88em;line-height:1.6;margin-bottom:14px">
+        Download the server binary for your platform. Place it in a dedicated folder, configure
+        <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:.9em">ServerConfig.toml</code> with your auth key from the
+        <strong>My Server Keys</strong> section, then run the executable.
+      </p>
+      <div id="serverBuildsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- No Builds Fallback -->
+    <div id="noBuildsMsg" style="display:none;text-align:center;padding:32px 0;color:var(--text-dim)">
+      <span style="font-size:2em">📭</span>
+      <p style="margin-top:8px">No builds have been uploaded yet. An admin needs to upload patched builds first.</p>
+    </div>
+
+    <!-- Admin Upload -->
+    <div id="buildUploadSection" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <h3 style="margin-bottom:4px">⬆️ Upload Build</h3>
+      <p style="color:var(--text-dim);font-size:.85em;margin-bottom:12px">Upload patched builds. They will overwrite any existing file of the same type.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Build Type</label>
+          <select id="buildUploadType" style="padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit">
+            <option value="launcher">🚀 Launcher (.exe)</option>
+            <option value="server-windows">🪟 Server Windows (.exe)</option>
+            <option value="server-linux">🐧 Server Linux</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>File</label>
+          <input type="file" id="buildUploadFile" style="padding:6px">
+        </div>
+        <div class="form-group" style="align-self:flex-end">
+          <button class="btn" onclick="uploadBuild()">Upload</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVERS PAGE -->
+<div class="page" id="page-servers">
+  <div class="section">
+    <h2>Server List</h2>
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="form-group" style="flex:1;margin-bottom:0">
+        <input type="text" id="serverSearch" placeholder="Search servers..." oninput="filterServers()" style="width:100%;min-width:unset">
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Name</th><th>Map</th><th>Players</th><th id="addrHeader" style="display:none">Address</th></tr></thead>
+      <tbody id="serverTableBody">
+        <tr><td class="empty-row" colspan="4">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ACCOUNT PAGE -->
+<div class="page" id="page-account">
+
+  <!-- Logged-in panel -->
+  <div id="loggedInSection">
+
+    <!-- My Account -->
+    <div class="section">
+      <h2>My Account</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" id="myNewPassword" placeholder="Enter new password">
+        </div>
+        <button class="btn btn-primary" onclick="changeMyPassword()">Change Password</button>
+      </div>
+    </div>
+
+    <!-- My Server Keys (visible to all logged-in users) -->
+    <div class="section">
+      <h2>My Server Keys</h2>
+      <table>
+        <thead><tr><th>Server Name</th><th>Key</th><th>Created</th></tr></thead>
+        <tbody id="myKeysTableBody">
+          <tr><td class="empty-row" colspan="3">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ADMIN SECTION (hidden for regular users) -->
+    <div id="adminSection" style="display:none">
+
+      <!-- Generate Server Key (admin) -->
+      <div class="section">
+        <h2>Generate Server Auth Key</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Server Name</label>
+            <input type="text" id="keyServerName" placeholder="My Server">
+          </div>
+          <div class="form-group">
+            <label>Assign To</label>
+            <select id="keyOwnerSelect"></select>
+          </div>
+          <button class="btn btn-primary" onclick="generateKey()">Generate Key</button>
+        </div>
+        <div class="key-display" id="keyResult">
+          <div class="key-label">Auth Key (copy to ServerConfig.toml)</div>
+          <code id="keyResultValue"></code>
+          <button class="copy-btn" onclick="copyKey(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- All Keys (admin) -->
+      <div class="section">
+        <h2>All Server Keys</h2>
+        <table>
+          <thead><tr><th>Server Name</th><th>Owner</th><th>Key</th><th>Created</th><th></th></tr></thead>
+          <tbody id="keysTableBody">
+            <tr><td class="empty-row" colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- User Management (admin) -->
+      <div class="section">
+        <h2>User Management</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="newUsername" placeholder="player1">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="newPassword" placeholder="password">
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="newRole">
+              <option value="USER">User</option>
+              <option value="ADM">Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="createUser()">Create User</button>
+        </div>
+        <table>
+          <thead><tr><th>Username</th><th>Role</th><th>ID</th><th></th></tr></thead>
+          <tbody id="usersTableBody">
+            <tr><td class="empty-row" colspan="4">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Registration Keys (admin) -->
+      <div class="section">
+        <h2>Registration Keys</h2>
+        <p style="color:var(--text-dim);font-size:.88em;margin-bottom:12px">Generate single-use keys for new users to register. Each key can only be used once.</p>
+        <div class="form-row" style="margin-bottom:14px">
+          <button class="btn btn-primary" onclick="generateRegKey()">Generate Registration Key</button>
+        </div>
+        <div class="key-display" id="regKeyResult" style="display:none">
+          <div class="key-label">Registration Key (give to user)</div>
+          <code id="regKeyValue"></code>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('regKeyValue').textContent);showToast('Key copied','success')">Copy</button>
+        </div>
+        <table>
+          <thead><tr><th>Key</th><th>Created By</th><th>Created</th><th>Status</th><th></th></tr></thead>
+          <tbody id="regKeysTableBody">
+            <tr><td class="empty-row" colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end gatedContent -->
+
+</div><!-- end container -->
+
+<!-- EDIT USER MODAL -->
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal">
+    <h3>Edit User</h3>
+    <input type="hidden" id="editUsername">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="editUserDisplay" disabled style="opacity:0.6">
+    </div>
+    <div class="form-group">
+      <label>New Password (leave blank to keep)</label>
+      <input type="password" id="editUserPassword" placeholder="New password">
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="editUserRole">
+        <option value="USER">User</option>
+        <option value="ADM">Admin</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('editUserModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUserEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERVER DETAIL MODAL -->
+<div class="modal-overlay" id="serverDetailModal">
+  <div class="modal server-modal">
+    <div class="server-modal-header">
+      <h3 id="serverDetailName"></h3>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('serverDetailModal')" style="flex-shrink:0">&#10005;</button>
+    </div>
+    <div class="server-detail-grid">
+      <div class="info-item">
+        <span class="info-label">Map</span>
+        <span class="info-value" id="sdMap">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Players</span>
+        <span class="info-value" id="sdPlayers">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Version</span>
+        <span class="info-value" id="sdVersion">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Owner</span>
+        <span class="info-value" id="sdOwner">--</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Tags</span>
+        <span class="info-value" id="sdTags">--</span>
+      </div>
+      <div class="info-item" id="sdAddressItem" style="display:none">
+        <span class="info-label">Address</span>
+        <span class="info-value" id="sdAddress" style="font-family:monospace;font-size:13px">--</span>
+      </div>
+    </div>
+    <div class="server-detail-section">
+      <span class="info-label">Description</span>
+      <div id="sdDesc" class="server-desc"></div>
+    </div>
+    <div class="server-detail-section" id="sdPlayerListSection" style="display:none">
+      <span class="info-label">Online Players</span>
+      <div id="sdPlayerList" class="server-player-list"></div>
+    </div>
+    <div class="server-detail-section">
+      <span class="info-label">Mods (<span id="sdModCount">0</span>) &mdash; Total Size: <span id="sdModSize">0 B</span></span>
+      <div id="sdModList" class="server-mod-list"></div>
+    </div>
+    <div id="sdUploadSection" style="display:none" class="server-detail-section">
+      <span class="info-label">Upload Mod</span>
+      <div class="form-row" style="margin-top:8px;margin-bottom:0">
+        <input type="file" id="sdModFile" accept=".zip" style="color:var(--text);font-size:13px">
+        <button class="btn btn-primary btn-sm" onclick="uploadMod()">Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- BACKEND SWITCHER MODAL -->
+<div class="modal-overlay" id="backendSwitcherModal">
+  <div class="modal" style="min-width:380px">
+    <h3>Switch Backend</h3>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px">
+      Connect your launcher, server, and this panel to a different backend.
+    </p>
+    <div id="savedBackendsList" class="saved-backends-list"></div>
+    <div class="form-group" style="margin-top:12px">
+      <label>Add Backend URL</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="newBackendUrl" placeholder="https://backend.example.com" style="flex:1">
+        <button class="btn btn-primary btn-sm" onclick="addAndGoBackend()">Go</button>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding:12px;border-radius:8px;background:var(--surface2);font-size:12px;color:var(--text-dim)">
+      <strong style="color:var(--text)">Launcher &amp; Server config:</strong><br>
+      Set <code style="color:var(--accent)">BackendUrl</code> in your <code>Launcher.cfg</code> and <code>ServerConfig.toml</code> to match.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('backendSwitcherModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- BeamMP Color Code Parser ---
+const BEAMMP_COLORS = {
+  '0': '#000000', '1': '#0000ff', '2': '#00aa00', '3': '#55aaff',
+  '4': '#ff0000', '5': '#ff55ff', '6': '#ff8800', '7': '#aaaaaa',
+  '8': '#555555', '9': '#aa55ff', 'a': '#55ff55', 'b': '#55ccff',
+  'c': '#dd6600', 'd': '#ff99cc', 'e': '#ffff00', 'f': '#ffffff',
+};
+
+function renderBeamMPText(raw) {
+  // Sanitize first
+  const safe = escHtml(raw);
+  let result = '';
+  let i = 0;
+  let currentColor = null;
+  let bold = false, italic = false, underline = false, strike = false;
+
+  while (i < safe.length) {
+    if (safe[i] === '^' && i + 1 < safe.length) {
+      const code = safe[i + 1].toLowerCase();
+      if (code === 'r') { // reset
+        if (currentColor || bold || italic || underline || strike) result += '</span>';
+        currentColor = null; bold = false; italic = false; underline = false; strike = false;
+        i += 2; continue;
+      }
+      if (code === 'l') { // bold
+        if (currentColor || bold || italic || underline || strike) result += '</span>';
+        bold = true;
+        result += buildSpan(currentColor, bold, italic, underline, strike);
+        i += 2; continue;
+      }
+      if (code === 'o') { // italic
+        if (currentColor || bold || italic || underline || strike) result += '</span>';
+        italic = true;
+        result += buildSpan(currentColor, bold, italic, underline, strike);
+        i += 2; continue;
+      }
+      if (code === 'n') { // underline
+        if (currentColor || bold || italic || underline || strike) result += '</span>';
+        underline = true;
+        result += buildSpan(currentColor, bold, italic, underline, strike);
+        i += 2; continue;
+      }
+      if (code === 'm') { // strikethrough
+        if (currentColor || bold || italic || underline || strike) result += '</span>';
+        strike = true;
+        result += buildSpan(currentColor, bold, italic, underline, strike);
+        i += 2; continue;
+      }
+      if (BEAMMP_COLORS[code] !== undefined) {
+        if (currentColor || bold || italic || underline || strike) result += '</span>';
+        currentColor = BEAMMP_COLORS[code];
+        result += buildSpan(currentColor, bold, italic, underline, strike);
+        i += 2; continue;
+      }
+    }
+    result += safe[i];
+    i++;
+  }
+  if (currentColor || bold || italic || underline || strike) result += '</span>';
+  return result;
+}
+
+function buildSpan(color, bold, italic, underline, strike) {
+  let style = '';
+  if (color) style += 'color:' + color + ';';
+  if (bold) style += 'font-weight:700;';
+  if (italic) style += 'font-style:italic;';
+  let td = [];
+  if (underline) td.push('underline');
+  if (strike) td.push('line-through');
+  if (td.length) style += 'text-decoration:' + td.join(' ') + ';';
+  return '<span style="' + style + '">';
+}
+
+// --- State ---
+let currentPage = 'status';
+let loggedIn = false;
+let currentUser = '';
+let currentRole = '';
+let isAdmin = false;
+
+// --- Util ---
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
+function extractMapName(p) {
+  const m = String(p).match(/\/levels\/([^/]+)\//);
+  return m ? m[1] : p;
+}
+
+function fmtUptime(sec) {
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const parts = [];
+  if (d) parts.push(d + 'd');
+  if (h) parts.push(h + 'h');
+  parts.push(m + 'm');
+  return parts.join(' ');
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  return { ok: res.ok, status: res.status, data: await res.json() };
+}
+
+function fmtBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function parseModList(modlist) {
+  if (!modlist) return [];
+  return String(modlist).split(';').filter(m => m.trim()).map(m => {
+    const parts = m.trim().split('/');
+    return parts[parts.length - 1] || m.trim();
+  });
+}
+
+function parsePlayerList(playerslist) {
+  if (!playerslist) return [];
+  const raw = String(playerslist);
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (typeof parsed === 'object') return Object.values(parsed);
+  } catch (_) {}
+  return raw.split(';').filter(p => p.trim());
+}
+
+let cachedServers = [];
+let currentDetailServerId = '';
+
+// --- Navigation ---
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-links button').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase() === page);
+  });
+  if (page === 'status') loadStatus();
+  if (page === 'servers') loadServers();
+  if (page === 'download') loadBuilds();
+  if (page === 'account' && loggedIn) {
+    loadMyKeys();
+    if (currentRole === 'ADM') { loadUsers(); loadAllKeys(); loadRegKeys(); }
+  }
+}
+
+// --- Auth ---
+function updateNav() {
+  const nav = document.getElementById('navRight');
+  if (loggedIn) {
+    const badgeClass = currentRole === 'ADM' ? 'adm' : 'user';
+    const roleLabel = currentRole === 'ADM' ? 'Admin' : 'User';
+    nav.innerHTML = `
+      <span class="user-badge ${badgeClass}">${escHtml(currentUser)} (${roleLabel})</span>
+      <button onclick="showPage('account')">Account</button>
+      <button onclick="doLogout()">Logout</button>
+    `;
+  } else {
+    nav.innerHTML = '';
+  }
+}
+
+function setLoggedIn(username, role) {
+  loggedIn = true;
+  currentUser = username;
+  currentRole = role;
+  isAdmin = role === 'ADM';
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('gatedContent').style.display = 'block';
+  document.getElementById('navLinks').style.display = 'flex';
+  document.getElementById('adminSection').style.display = role === 'ADM' ? 'block' : 'none';
+  updateNav();
+  loadMyKeys();
+  loadStatus();
+  showPage('status');
+  if (role === 'ADM') { loadUsers(); loadAllKeys(); loadRegKeys(); }
+}
+
+function clearLogin() {
+  loggedIn = false;
+  currentUser = '';
+  currentRole = '';
+  isAdmin = false;
+  document.getElementById('loginGate').style.display = 'block';
+  document.getElementById('gatedContent').style.display = 'none';
+  document.getElementById('navLinks').style.display = 'none';
+  document.getElementById('adminSection').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  updateNav();
+  loadLoginStatus();
+}
+
+async function checkSession() {
+  try {
+    const { ok, data } = await api('/api/admin/session');
+    if (ok && data.authenticated) {
+      setLoggedIn(data.username, data.role);
+    } else {
+      loadLoginStatus();
+    }
+  } catch (_) {
+    loadLoginStatus();
+  }
+}
+
+async function loadLoginStatus() {
+  const el = document.getElementById('loginBackendStatus');
+  try {
+    const res = await fetch('/api/status');
+    const d = await res.json();
+    if (d.status === 'online') {
+      el.innerHTML = '<span style="color:var(--green)">&#9679;</span> Backend online &mdash; ' +
+        d.active_servers + ' server' + (d.active_servers !== 1 ? 's' : '') + ', ' +
+        d.total_players + ' player' + (d.total_players !== 1 ? 's' : '');
+    } else {
+      el.innerHTML = '<span style="color:var(--red)">&#9679;</span> Backend offline';
+    }
+  } catch (_) {
+    el.innerHTML = '<span style="color:var(--red)">&#9679;</span> Backend unreachable';
+  }
+}
+
+function toggleRegister(show) {
+  document.getElementById('loginForm').style.display = show ? 'none' : '';
+  document.getElementById('registerForm').style.display = show ? '' : 'none';
+  document.getElementById('authTitle').textContent = show ? 'Register' : 'Login';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('regResult').style.display = 'none';
+}
+
+async function doRegister() {
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  const key = document.getElementById('regKey').value.trim();
+  const user = document.getElementById('regUser').value.trim();
+  if (!key) { errEl.textContent = 'Enter your registration key'; return; }
+  if (!user) { errEl.textContent = 'Choose a username'; return; }
+  const { ok, data } = await api('/api/register', {
+    method: 'POST',
+    body: JSON.stringify({ registration_key: key, username: user }),
+  });
+  if (ok && data.success) {
+    document.getElementById('regPassword').value = data.password;
+    document.getElementById('regPassword').type = 'password';
+    document.getElementById('regResult').style.display = '';
+    document.getElementById('regKey').value = '';
+    document.getElementById('regUser').value = '';
+    showToast('Account created! Save your password.', 'success');
+  } else {
+    errEl.textContent = data.message || 'Registration failed';
+  }
+}
+
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  if (!user || !pass) { errEl.textContent = 'Enter username and password'; return; }
+
+  const { ok, data } = await api('/api/admin/login', {
+    method: 'POST',
+    body: JSON.stringify({ username: user, password: pass }),
+  });
+  if (ok && data.success) {
+    setLoggedIn(data.username, data.role);
+    showToast('Logged in as ' + data.username, 'success');
+  } else {
+    errEl.textContent = data.message || 'Login failed';
+  }
+}
+
+async function doLogout() {
+  await api('/api/admin/logout', { method: 'POST' });
+  clearLogin();
+  showToast('Logged out', '');
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+document.getElementById('regKey').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('regUser').focus(); });
+document.getElementById('regUser').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+
+// --- Change own password ---
+async function changeMyPassword() {
+  const pw = document.getElementById('myNewPassword').value;
+  if (!pw) { showToast('Enter a new password', 'error'); return; }
+  const { ok, data } = await api('/api/admin/users/' + encodeURIComponent(currentUser), {
+    method: 'PATCH',
+    body: JSON.stringify({ password: pw }),
+  });
+  if (ok && data.success) {
+    showToast('Password changed', 'success');
+    document.getElementById('myNewPassword').value = '';
+  } else {
+    showToast(data.message || 'Failed', 'error');
+  }
+}
+
+// --- Status ---
+async function loadStatus() {
+  try {
+    const { data } = await api('/api/status');
+    document.getElementById('st-status').textContent = data.status === 'online' ? 'Online' : 'Offline';
+    document.getElementById('st-servers').textContent = data.active_servers;
+    document.getElementById('st-players').textContent = data.total_players;
+    document.getElementById('st-users').textContent = data.registered_users;
+    document.getElementById('st-uptime').textContent = fmtUptime(data.uptime_seconds);
+    document.getElementById('st-launcher-ver').textContent = 'v' + data.launcher_version;
+    document.getElementById('st-server-ver').textContent = 'v' + data.server_version;
+    document.getElementById('st-backend-ver').textContent = 'v' + data.backend_version;
+  } catch (_) {}
+  loadMetrics();
+}
+
+async function loadMetrics() {
+  try {
+    const { ok, data } = await api('/api/metrics');
+    if (!ok || !data.points) return;
+    const pts = data.points;
+    drawChart('chart-players', pts.map(p => p.players), 'rgba(108,92,231,0.8)', 'rgba(108,92,231,0.1)');
+    drawChart('chart-requests', pts.map(p => p.requests), 'rgba(0,184,148,0.8)', 'rgba(0,184,148,0.1)');
+    drawChart('chart-heartbeats', pts.map(p => p.heartbeats), 'rgba(243,156,18,0.8)', 'rgba(243,156,18,0.1)');
+  } catch (_) {}
+}
+
+// --- Builds / Downloads ---
+const ICON_WINDOWS = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><path d="M3 5.548l7.065-.966v6.835H3V5.548zm0 12.904l7.065.966v-6.835H3v5.869zm7.937 1.085L21 21V12.583h-10.063v6.954zm0-15.074v7.032H21V3l-10.063 1.463z" fill="#0078D4"/></svg>';
+const ICON_DEBIAN = '<svg viewBox="0 0 24 24" width="28" height="28"><path d="M12.31 1.97c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10zm4.73 6.57c.12.56.08 1.17-.07 1.73l-.03.1c-.04.13-.08.26-.14.38-.08.2-.18.38-.3.55-.16.23-.35.44-.56.62a4.5 4.5 0 01-.72.5c.17.62.13 1.27-.08 1.86-.22.6-.6 1.12-1.1 1.49a3.1 3.1 0 01-1.16.53c-.08.35-.23.68-.44.97-.28.38-.66.68-1.1.85-.43.17-.9.2-1.35.1a2.4 2.4 0 01-.87-.43c-.3.2-.63.34-.98.42a2.7 2.7 0 01-1.14 0 2.5 2.5 0 01-1.02-.53 2.5 2.5 0 01-.67-.93 2.47 2.47 0 01-.55.06c-.42-.02-.83-.14-1.18-.37a2.2 2.2 0 01-.78-.9 2.3 2.3 0 01-.2-1.2c.05-.4.2-.78.43-1.1a3.7 3.7 0 01-.5-1 3 3 0 01-.1-1.13c.06-.38.18-.74.38-1.06.15-.25.34-.47.56-.66a3.8 3.8 0 01-.02-1.06c.07-.48.24-.93.5-1.33.3-.45.7-.82 1.18-1.06.45-.23.94-.35 1.44-.35l.15.01c.3-.38.68-.69 1.1-.9.5-.26 1.05-.39 1.6-.38.5.01.98.14 1.42.37.38.2.71.48.97.82.38-.1.78-.12 1.17-.06.46.08.88.27 1.24.56.38.3.67.7.84 1.15.14.37.2.77.17 1.16z" fill="#A80030"/></svg>';
+const BUILD_META = {
+  'launcher': {
+    label: 'BeamMP Launcher',
+    icon: '🚀',
+    group: 'client',
+    path: 'C:\\Users\\&lt;You&gt;\\AppData\\Roaming\\BeamMP-Launcher\\',
+    tree: [
+      { name: 'Resources\\', type: 'folder' },
+      { name: 'BeamMP-Launcher.exe', type: 'file', highlight: true },
+      { name: 'BeamMP-Launcher.old', type: 'dim' },
+      { name: 'key', type: 'dim' },
+      { name: 'Launcher.cfg', type: 'dim' },
+      { name: 'Launcher.log', type: 'dim' },
+      { name: 'unins000.dat', type: 'dim' },
+      { name: 'unins000.exe', type: 'dim' },
+    ],
+    tip: 'Replace the existing launcher exe. Your Launcher.cfg config and key file will be preserved.',
+  },
+  'server-windows': {
+    label: 'BeamMP Server (Windows)',
+    icon: ICON_WINDOWS,
+    group: 'server',
+    path: 'C:\\BeamMP-Server\\',
+    tree: [
+      { name: 'Resources\\', type: 'folder' },
+      { name: 'Client\\', type: 'folder', indent: 1 },
+      { name: 'Server\\', type: 'folder', indent: 1 },
+      { name: 'BeamMP-Server.exe', type: 'file', highlight: true },
+      { name: 'ServerConfig.toml', type: 'dim' },
+      { name: 'Server.log', type: 'dim' },
+      { name: 'Server.old.log', type: 'dim' },
+      { name: '.Threads.log', type: 'dim' },
+    ],
+    tip: 'Place the exe in its own folder. ServerConfig.toml is auto-generated on first run — edit it to set your auth key and backend URL.',
+  },
+  'server-linux': {
+    label: 'BeamMP Server (Debian)',
+    icon: ICON_DEBIAN,
+    group: 'server',
+    path: '/opt/beammp-server/',
+    tree: [
+      { name: 'Resources/', type: 'folder' },
+      { name: '.autoExclude', type: 'dim' },
+      { name: '.Threads.log', type: 'dim' },
+      { name: 'BeamMP-Server', type: 'dim' },
+      { name: 'BeamMP-Server.debian.12.x86_64', type: 'file', highlight: true },
+      { name: 'Server.log', type: 'dim' },
+      { name: 'Server.old.log', type: 'dim' },
+      { name: 'ServerConfig.toml', type: 'dim' },
+    ],
+    tip: 'chmod +x the binary. ServerConfig.toml is auto-generated on first run — edit it to set your auth key and backend URL.',
+  },
+};
+
+function renderBuildCard(b) {
+  const meta = BUILD_META[b.type];
+  if (!meta) return '';
+  const shortHash = b.sha256 ? b.sha256.substring(0, 16) : '--';
+  const treeHtml = meta.tree.map(n => {
+    const indent = (n.indent || 0) * 18;
+    const icon = n.type === 'folder' ? '📁' : (n.highlight ? '📄' : '📄');
+    const style = n.highlight
+      ? 'color:var(--accent);font-weight:600'
+      : n.type === 'dim' ? 'color:var(--text-dim)' : 'color:var(--text)';
+    const arrow = n.highlight ? ' ◀ replace this' : '';
+    const arrowSpan = arrow ? '<span style="color:var(--green);font-size:.8em;margin-left:6px">' + arrow + '</span>' : '';
+    return '<div style="padding:2px 0;margin-left:' + indent + 'px;font-family:monospace;font-size:.85em;' + style + '">' + icon + ' ' + n.name + arrowSpan + '</div>';
+  }).join('');
+  const delBtn = isAdmin ? '<button class="btn btn-danger" style="padding:4px 8px;font-size:.8em;margin-left:6px" onclick="deleteBuild(\'' + b.type + '\')">Remove</button>' : '';
+  const iconHtml = meta.icon.startsWith('<') ? '<div style="flex-shrink:0">' + meta.icon + '</div>' : '<span style="font-size:1.6em;flex-shrink:0">' + meta.icon + '</span>';
+  return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column">'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+    + iconHtml
+    + '<div><strong style="font-size:1em">' + meta.label + '</strong>'
+    + '<div style="font-size:.8em;color:var(--text-dim)">' + b.filename + ' · ' + fmtBytes(b.size) + '</div></div></div>'
+    + '<div style="font-size:.8em;color:var(--text-dim);margin-bottom:6px">📍 Expected location:</div>'
+    + '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px">'
+    + '<div style="font-family:monospace;font-size:.8em;color:var(--text-dim);margin-bottom:6px;word-break:break-all">' + meta.path + '</div>'
+    + treeHtml + '</div>'
+    + '<div style="font-size:.84em;color:var(--text-dim);line-height:1.5;margin-bottom:12px">💡 ' + meta.tip + '</div>'
+    + '<div style="font-family:monospace;font-size:.78em;color:var(--text-dim);margin-bottom:12px" title="' + (b.sha256 || '') + '">🔒 SHA256: ' + shortHash + '…</div>'
+    + '<div style="margin-top:auto;display:flex;align-items:center;gap:6px">'
+    + '<a href="/api/builds/download/' + b.type + '" class="btn btn-primary" style="padding:6px 14px;font-size:.9em;text-decoration:none;color:#fff">Download</a>'
+    + delBtn + '</div></div>';
+}
+
+async function loadBuilds() {
+  if (!currentUser) return;
+  document.getElementById('buildUploadSection').style.display = isAdmin ? '' : 'none';
+  try {
+    const { ok, data } = await api('/api/builds');
+    if (!ok || !data.builds) return;
+    const builds = data.builds;
+    const clientBuilds = builds.filter(b => BUILD_META[b.type] && BUILD_META[b.type].group === 'client');
+    const serverBuilds = builds.filter(b => BUILD_META[b.type] && BUILD_META[b.type].group === 'server');
+    document.getElementById('clientBuildsGrid').innerHTML = clientBuilds.map(renderBuildCard).join('') || '<div style="color:var(--text-dim);font-size:.9em;padding:12px 0">No client builds uploaded yet.</div>';
+    document.getElementById('serverBuildsGrid').innerHTML = serverBuilds.map(renderBuildCard).join('') || '<div style="color:var(--text-dim);font-size:.9em;padding:12px 0">No server builds uploaded yet.</div>';
+    document.getElementById('client-patch-area').style.display = '';
+    document.getElementById('server-patch-area').style.display = '';
+    document.getElementById('noBuildsMsg').style.display = builds.length === 0 ? '' : 'none';
+    if (builds.length === 0) {
+      document.getElementById('client-patch-area').style.display = 'none';
+      document.getElementById('server-patch-area').style.display = 'none';
+    }
+  } catch (_) {}
+}
+
+async function uploadBuild() {
+  const buildType = document.getElementById('buildUploadType').value;
+  const meta = BUILD_META[buildType] || {};
+  const label = meta.label || buildType;
+  const fileInput = document.getElementById('buildUploadFile');
+  if (!fileInput.files.length) { showToast('Select a file to upload', 'error'); return; }
+  const file = fileInput.files[0];
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+  showToast('Uploading ' + label + ' (' + sizeMB + ' MB)...', '');
+  const formData = new FormData();
+  formData.append('type', buildType);
+  formData.append('file', file);
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/builds/upload');
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        document.getElementById('toast').textContent = 'Uploading ' + label + '... ' + pct + '%';
+      }
+    };
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          showToast('Build uploaded: ' + data.filename, 'success');
+          fileInput.value = '';
+          loadBuilds();
+        } else { showToast(data.message || 'Upload failed', 'error'); }
+      } catch (_) { showToast('Upload failed', 'error'); }
+    };
+    xhr.onerror = () => showToast('Upload failed — check connection', 'error');
+    xhr.ontimeout = () => showToast('Upload timed out', 'error');
+    xhr.timeout = 600000;
+    xhr.send(formData);
+  } catch (_) { showToast('Upload failed', 'error'); }
+}
+
+async function deleteBuild(buildType) {
+  const label = (BUILD_META[buildType] || {}).label || buildType;
+  if (!confirm('Delete ' + label + ' build?')) return;
+  const { ok, data } = await api('/api/builds/' + encodeURIComponent(buildType), { method: 'DELETE' });
+  if (ok && data.success) { showToast('Build deleted', 'success'); loadBuilds(); }
+  else { showToast(data.message || 'Failed', 'error'); }
+}
+
+function drawChart(canvasId, values, lineColor, fillColor) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  if (!values.length) {
+    ctx.fillStyle = 'rgba(136,136,170,0.5)';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Collecting data...', w / 2, h / 2);
+    return;
+  }
+
+  const max = Math.max(1, ...values);
+  const padTop = 20, padBot = 22, padLeft = 36, padRight = 8;
+  const plotW = w - padLeft - padRight;
+  const plotH = h - padTop - padBot;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(42,42,74,0.6)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padTop + (plotH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padLeft, y);
+    ctx.lineTo(w - padRight, y);
+    ctx.stroke();
+  }
+
+  // Y-axis labels
+  ctx.fillStyle = 'rgba(136,136,170,0.7)';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const y = padTop + (plotH / 4) * i;
+    const val = Math.round(max * (1 - i / 4));
+    ctx.fillText(val, padLeft - 4, y + 3);
+  }
+
+  // X-axis labels
+  ctx.textAlign = 'center';
+  const labels = ['-60m', '-45m', '-30m', '-15m', 'now'];
+  for (let i = 0; i < labels.length; i++) {
+    const x = padLeft + (plotW / (labels.length - 1)) * i;
+    ctx.fillText(labels[i], x, h - 4);
+  }
+
+  // Line + fill
+  const step = values.length > 1 ? plotW / (values.length - 1) : 0;
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const x = padLeft + step * i;
+    const y = padTop + plotH - (v / max) * plotH;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Fill area
+  ctx.lineTo(padLeft + step * (values.length - 1), padTop + plotH);
+  ctx.lineTo(padLeft, padTop + plotH);
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  // Current value badge
+  const last = values[values.length - 1];
+  const lastX = padLeft + step * (values.length - 1);
+  const lastY = padTop + plotH - (last / max) * plotH;
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+  ctx.fillStyle = lineColor;
+  ctx.fill();
+  ctx.fillStyle = lineColor.replace('0.8', '1');
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(last, lastX - 6, lastY - 6);
+}
+
+// --- Servers ---
+async function loadServers() {
+  try {
+    const res = await fetch('/servers-info', { credentials: 'same-origin' });
+    const servers = await res.json();
+    cachedServers = servers;
+    renderServerTable(servers);
+  } catch (_) {
+    document.getElementById('serverTableBody').innerHTML =
+      '<tr><td class="empty-row" colspan="4">Failed to load servers</td></tr>';
+  }
+}
+
+function renderServerTable(servers) {
+  const tbody = document.getElementById('serverTableBody');
+  const isAdmin = currentRole === 'ADM';
+  document.getElementById('addrHeader').style.display = isAdmin ? '' : 'none';
+  const cols = isAdmin ? 4 : 3;
+  if (!servers.length) {
+    tbody.innerHTML = `<tr><td class="empty-row" colspan="${cols}">No servers online</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = servers.map((s) => {
+    const i = cachedServers.indexOf(s);
+    return `
+      <tr onclick="showServerDetail(${i})">
+        <td>${renderBeamMPText(s.sname || 'Unnamed')}</td>
+        <td>${escHtml(extractMapName(s.map || ''))}</td>
+        <td>${s.players || 0} / ${s.maxplayers || 0}</td>
+        ${isAdmin ? `<td style="font-family:monospace;font-size:13px;color:var(--text-dim)">${escHtml((s.ip || '') + ':' + (s.port || 30814))}</td>` : ''}
+      </tr>`;
+  }).join('');
+}
+
+function filterServers() {
+  const q = document.getElementById('serverSearch').value.toLowerCase().trim();
+  if (!q) { renderServerTable(cachedServers); return; }
+  const filtered = cachedServers.filter(s =>
+    (s.sname || '').toLowerCase().includes(q) ||
+    (s.map || '').toLowerCase().includes(q) ||
+    (s.owner || '').toLowerCase().includes(q) ||
+    (s.sdesc || '').toLowerCase().includes(q) ||
+    (s.tags || '').toLowerCase().includes(q)
+  );
+  renderServerTable(filtered);
+}
+
+// --- My Keys (user view) ---
+async function loadMyKeys() {
+  try {
+    const { ok, data } = await api('/api/my/keys');
+    if (!ok) return;
+    const tbody = document.getElementById('myKeysTableBody');
+    if (!data.keys.length) {
+      tbody.innerHTML = '<tr><td class="empty-row" colspan="3">No keys assigned to you</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.keys.map(k => `
+      <tr>
+        <td>
+          <span class="key-name-display" id="kn-${escHtml(k.key.substring(0,12))}">${escHtml(k.server_name)}</span>
+          <button class="copy-btn" onclick="startRenameKey('${escHtml(k.key)}', this)" title="Rename">&#9998;</button>
+        </td>
+        <td style="font-family:monospace;font-size:12px;color:var(--text-dim)">
+          ${escHtml(k.key.substring(0, 12))}...
+          <button class="copy-btn" onclick="copyText(this, '${escHtml(k.key)}')">Copy</button>
+        </td>
+        <td style="color:var(--text-dim);font-size:13px">${escHtml(k.created_at || '')}</td>
+      </tr>
+    `).join('');
+  } catch (_) {}
+}
+
+function startRenameKey(key, btn) {
+  const td = btn.closest('td');
+  const span = td.querySelector('.key-name-display');
+  const oldName = span.textContent;
+  td.innerHTML = `
+    <input type="text" value="${escHtml(oldName)}" style="width:60%;min-width:100px;padding:4px 8px;font-size:13px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;outline:none;font-family:inherit"
+           onkeydown="if(event.key==='Enter')saveRenameKey('${escHtml(key)}',this);if(event.key==='Escape'){loadMyKeys();}"
+           onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    <button class="btn btn-primary btn-sm" onclick="saveRenameKey('${escHtml(key)}',this.previousElementSibling)">Save</button>
+    <button class="btn btn-outline btn-sm" onclick="loadMyKeys()">Cancel</button>
+  `;
+  td.querySelector('input').focus();
+  td.querySelector('input').select();
+}
+
+async function saveRenameKey(key, input) {
+  const newName = input.value.trim();
+  if (!newName) { showToast('Name cannot be empty', 'error'); return; }
+  try {
+    const { ok, data } = await api('/api/my/keys/' + key, {
+      method: 'PATCH',
+      body: JSON.stringify({ server_name: newName }),
+    });
+    if (ok) { showToast('Server name updated'); loadMyKeys(); }
+    else { showToast(data.message || 'Rename failed', 'error'); }
+  } catch (_) { showToast('Rename failed', 'error'); }
+}
+
+// --- Admin: All Keys ---
+async function loadAllKeys() {
+  try {
+    const { ok, data } = await api('/api/admin/keys');
+    if (!ok) return;
+    const tbody = document.getElementById('keysTableBody');
+    if (!data.keys.length) {
+      tbody.innerHTML = '<tr><td class="empty-row" colspan="5">No keys generated yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.keys.map(k => `
+      <tr>
+        <td>${escHtml(k.server_name)}</td>
+        <td><span class="badge badge-green">${escHtml(k.owner || k.created_by || '?')}</span></td>
+        <td style="font-family:monospace;font-size:12px;color:var(--text-dim)">
+          ${escHtml(k.key.substring(0, 12))}...
+          <button class="copy-btn" onclick="copyText(this, '${escHtml(k.key)}')">Copy</button>
+        </td>
+        <td style="color:var(--text-dim);font-size:13px">${escHtml(k.created_at || '')}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteKey('${escHtml(k.key)}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (_) {}
+}
+
+async function generateKey() {
+  const name = document.getElementById('keyServerName').value.trim() || 'My Server';
+  const owner = document.getElementById('keyOwnerSelect').value;
+  const { ok, data } = await api('/api/admin/keys', {
+    method: 'POST',
+    body: JSON.stringify({ server_name: name, owner }),
+  });
+  if (ok && data.success) {
+    const display = document.getElementById('keyResult');
+    document.getElementById('keyResultValue').textContent = data.auth_key;
+    display.style.display = 'block';
+    showToast('Key generated for ' + data.owner, 'success');
+    loadAllKeys();
+    if (data.owner === currentUser) loadMyKeys();
+  } else {
+    showToast(data.message || 'Failed to generate key', 'error');
+  }
+}
+
+async function deleteKey(key) {
+  if (!confirm('Delete this server key?')) return;
+  const { ok, data } = await api('/api/admin/keys/' + encodeURIComponent(key), { method: 'DELETE' });
+  if (ok && data.success) {
+    showToast('Key deleted', 'success');
+    loadAllKeys();
+    loadMyKeys();
+  } else {
+    showToast(data.message || 'Failed', 'error');
+  }
+}
+
+function copyKey(btn) { copyText(btn, document.getElementById('keyResultValue').textContent); }
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// --- Admin: Users ---
+async function loadUsers() {
+  try {
+    const { ok, data } = await api('/api/admin/users');
+    if (!ok) return;
+
+    // Populate owner dropdown
+    const sel = document.getElementById('keyOwnerSelect');
+    sel.innerHTML = data.users.map(u =>
+      `<option value="${escHtml(u.username)}" ${u.username === currentUser ? 'selected' : ''}>${escHtml(u.username)}</option>`
+    ).join('');
+
+    // Populate user table
+    const tbody = document.getElementById('usersTableBody');
+    if (!data.users.length) {
+      tbody.innerHTML = '<tr><td class="empty-row" colspan="4">No users</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.users.map(u => `
+      <tr>
+        <td>${escHtml(u.username)}</td>
+        <td><span class="badge ${u.role === 'ADM' ? 'badge-purple' : 'badge-green'}">${escHtml(u.role)}</span></td>
+        <td style="color:var(--text-dim)">${u.id}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="openEditUser('${escHtml(u.username)}', '${escHtml(u.role)}')">Edit</button>
+          ${u.username !== currentUser
+            ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${escHtml(u.username)}')">Delete</button>`
+            : '<span style="color:var(--text-dim);font-size:12px;align-self:center">you</span>'
+          }
+        </td>
+      </tr>
+    `).join('');
+  } catch (_) {}
+}
+
+async function createUser() {
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newPassword').value;
+  const role = document.getElementById('newRole').value;
+  if (!username || !password) { showToast('Username and password required', 'error'); return; }
+
+  const { ok, data } = await api('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify({ username, password, role }),
+  });
+  if (ok && data.success) {
+    showToast('User created', 'success');
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+    loadUsers();
+    loadStatus();
+  } else {
+    showToast(data.message || 'Failed to create user', 'error');
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm('Delete user "' + username + '"? Their keys will remain but be unassigned.')) return;
+  const { ok, data } = await api('/api/admin/users/' + encodeURIComponent(username), { method: 'DELETE' });
+  if (ok && data.success) {
+    showToast('User deleted', 'success');
+    loadUsers();
+    loadStatus();
+  } else {
+    showToast(data.message || 'Failed', 'error');
+  }
+}
+
+// --- Registration Keys (admin) ---
+async function loadRegKeys() {
+  try {
+    const { ok, data } = await api('/api/admin/registration-keys');
+    if (!ok) return;
+    const tbody = document.getElementById('regKeysTableBody');
+    if (!data.keys.length) {
+      tbody.innerHTML = '<tr><td class="empty-row" colspan="5">No registration keys</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.keys.map(k => {
+      const used = k.used;
+      const keyCell = used
+        ? '<span style="color:var(--text-dim);font-style:italic">Key destroyed</span>'
+        : '<span style="font-family:monospace;font-size:.85em;word-break:break-all">' + escHtml(k.key) + '</span>';
+      const statusCell = used
+        ? '<span style="color:var(--orange);font-weight:600">USED</span><br><span style="font-size:.8em;color:var(--text-dim)">by ' + escHtml(k.used_by || '?') + ' at ' + escHtml(k.used_at || '?') + '</span>'
+        : '<span style="color:var(--green)">Available</span>';
+      const actionCell = used
+        ? ''
+        : `<button class="btn btn-danger btn-sm" onclick="deleteRegKey('${escHtml(k.key)}')">Delete</button>`;
+      return `<tr>
+        <td>${keyCell}</td>
+        <td>${escHtml(k.created_by)}</td>
+        <td style="color:var(--text-dim)">${escHtml(k.created_at)}</td>
+        <td>${statusCell}</td>
+        <td>${actionCell}</td>
+      </tr>`;
+    }).join('');
+  } catch (_) {}
+}
+
+async function generateRegKey() {
+  const { ok, data } = await api('/api/admin/registration-keys', { method: 'POST' });
+  if (ok && data.success) {
+    document.getElementById('regKeyValue').textContent = data.key;
+    document.getElementById('regKeyResult').style.display = '';
+    showToast('Registration key generated', 'success');
+    loadRegKeys();
+  } else {
+    showToast(data.message || 'Failed', 'error');
+  }
+}
+
+async function deleteRegKey(key) {
+  if (!confirm('Delete this registration key?')) return;
+  const { ok, data } = await api('/api/admin/registration-keys/' + encodeURIComponent(key), { method: 'DELETE' });
+  if (ok && data.success) {
+    showToast('Key deleted', 'success');
+    loadRegKeys();
+  } else {
+    showToast(data.message || 'Failed', 'error');
+  }
+}
+
+// --- Edit User Modal ---
+function openEditUser(username, role) {
+  document.getElementById('editUsername').value = username;
+  document.getElementById('editUserDisplay').value = username;
+  document.getElementById('editUserPassword').value = '';
+  document.getElementById('editUserRole').value = role;
+  document.getElementById('editUserModal').classList.add('show');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+async function saveUserEdit() {
+  const username = document.getElementById('editUsername').value;
+  const password = document.getElementById('editUserPassword').value;
+  const role = document.getElementById('editUserRole').value;
+  const body = {};
+  if (password) body.password = password;
+  body.role = role;
+
+  const { ok, data } = await api('/api/admin/users/' + encodeURIComponent(username), {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+  if (ok && data.success) {
+    showToast(data.message, 'success');
+    closeModal('editUserModal');
+    loadUsers();
+  } else {
+    showToast(data.message || 'Failed', 'error');
+  }
+}
+
+// Close modal on overlay click
+document.getElementById('editUserModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('editUserModal');
+});
+
+document.getElementById('serverDetailModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('serverDetailModal');
+});
+
+// --- Server Detail ---
+function showServerDetail(index) {
+  const s = cachedServers[index];
+  if (!s) return;
+  currentDetailServerId = s.server_id || '';
+  const isAdmin = currentRole === 'ADM';
+
+  document.getElementById('serverDetailName').innerHTML = renderBeamMPText(s.sname || 'Unnamed Server');
+  document.getElementById('sdMap').textContent = extractMapName(s.map || '');
+  document.getElementById('sdPlayers').textContent = (s.players || 0) + ' / ' + (s.maxplayers || 0);
+  document.getElementById('sdVersion').textContent = s.cversion || s.version || '--';
+  document.getElementById('sdTags').textContent = s.tags || 'None';
+  document.getElementById('sdOwner').textContent = s.owner || '--';
+
+  const addrItem = document.getElementById('sdAddressItem');
+  if (isAdmin && s.ip) {
+    addrItem.style.display = '';
+    document.getElementById('sdAddress').textContent = (s.ip || '') + ':' + (s.port || 30814);
+  } else {
+    addrItem.style.display = 'none';
+  }
+
+  const desc = s.sdesc || 'No description provided.';
+  document.getElementById('sdDesc').innerHTML = renderBeamMPText(desc);
+
+  const players = parsePlayerList(s.playerslist);
+  const plSection = document.getElementById('sdPlayerListSection');
+  if (players.length) {
+    plSection.style.display = '';
+    document.getElementById('sdPlayerList').innerHTML = players.map(p =>
+      `<span class="player-tag">${escHtml(p)}</span>`
+    ).join('');
+  } else {
+    plSection.style.display = 'none';
+  }
+
+  const mods = parseModList(s.modlist);
+  const downloadable = s.downloadable_mods || [];
+  document.getElementById('sdModCount').textContent = s.modstotal || mods.length;
+  document.getElementById('sdModSize').textContent = fmtBytes(s.modstotalsize || 0);
+
+  // Build a map: base name -> {download filename or null}
+  const dlBaseName = (f) => f.replace(/\.zip$/i, '');
+  const dlMap = {};
+  downloadable.forEach(f => { dlMap[dlBaseName(f)] = f; });
+
+  // Merge: for each heartbeat mod, check if a matching download exists
+  const merged = [];
+  const seen = new Set();
+  mods.forEach(mod => {
+    const base = dlBaseName(mod);
+    seen.add(base);
+    const dlFile = dlMap[base] || dlMap[mod];
+    merged.push({ name: mod, dlFile: dlFile || null });
+  });
+  // Add any downloadable files not matched to a heartbeat mod
+  downloadable.forEach(f => {
+    const base = dlBaseName(f);
+    if (!seen.has(base)) {
+      merged.push({ name: f, dlFile: f });
+    }
+  });
+
+  const modListEl = document.getElementById('sdModList');
+  if (merged.length === 0) {
+    modListEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:8px 0">No mods</div>';
+  } else {
+    modListEl.innerHTML = merged.map(m => {
+      return `<div class="mod-item">
+        <span class="mod-name">${escHtml(m.name)}</span>
+        <span style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+          ${m.dlFile
+            ? `<a href="/api/servers/${encodeURIComponent(currentDetailServerId)}/mods/${encodeURIComponent(m.dlFile)}" class="btn btn-primary btn-sm" style="text-decoration:none;font-size:11px">Download</a>`
+            : '<span class="badge badge-orange" style="font-size:10px">Server Only</span>'}
+          ${isAdmin && m.dlFile
+            ? `<button class="btn btn-danger btn-sm" onclick="deleteModFile(decodeURIComponent('${encodeURIComponent(m.dlFile)}'))" style="padding:2px 6px">&#10005;</button>`
+            : ''}
+        </span>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('sdUploadSection').style.display = isAdmin ? '' : 'none';
+  document.getElementById('serverDetailModal').classList.add('show');
+}
+
+async function uploadMod() {
+  const fileInput = document.getElementById('sdModFile');
+  if (!fileInput.files.length) { showToast('Select a .zip file to upload', 'error'); return; }
+  const file = fileInput.files[0];
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+  showToast('Uploading ' + file.name + ' (' + sizeMB + ' MB)...', '');
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/servers/' + encodeURIComponent(currentDetailServerId) + '/upload-mod');
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        document.getElementById('toast').textContent = 'Uploading ' + file.name + '... ' + pct + '%';
+      }
+    };
+    xhr.onload = async () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          showToast('Mod uploaded: ' + data.filename, 'success');
+          fileInput.value = '';
+          await loadServers();
+          const idx = cachedServers.findIndex(s => s.server_id === currentDetailServerId);
+          if (idx >= 0) showServerDetail(idx);
+        } else { showToast(data.message || 'Upload failed', 'error'); }
+      } catch (_) { showToast('Upload failed', 'error'); }
+    };
+    xhr.onerror = () => showToast('Upload failed — check connection', 'error');
+    xhr.ontimeout = () => showToast('Upload timed out', 'error');
+    xhr.timeout = 600000;
+    xhr.send(formData);
+  } catch (_) { showToast('Upload failed', 'error'); }
+}
+
+async function deleteModFile(filename) {
+  if (!confirm('Delete mod "' + filename + '"?')) return;
+  try {
+    const res = await fetch('/api/servers/' + encodeURIComponent(currentDetailServerId) + '/mods/' + encodeURIComponent(filename), {
+      method: 'DELETE', credentials: 'same-origin',
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Mod deleted', 'success');
+      await loadServers();
+      const idx = cachedServers.findIndex(s => s.server_id === currentDetailServerId);
+      if (idx >= 0) showServerDetail(idx);
+    } else { showToast(data.message || 'Delete failed', 'error'); }
+  } catch (_) { showToast('Delete failed', 'error'); }
+}
+
+// --- Backend Switcher ---
+const BACKENDS_KEY = 'beammp_saved_backends';
+
+function getSavedBackends() {
+  try { return JSON.parse(localStorage.getItem(BACKENDS_KEY) || '[]'); } catch (_) { return []; }
+}
+
+function saveSavedBackends(list) {
+  localStorage.setItem(BACKENDS_KEY, JSON.stringify(list));
+}
+
+function getCurrentBackendUrl() {
+  return window.location.origin;
+}
+
+function ensureCurrentSaved() {
+  const cur = getCurrentBackendUrl();
+  const list = getSavedBackends();
+  if (!list.some(b => b.url === cur)) {
+    list.unshift({ url: cur, label: '' });
+    saveSavedBackends(list);
+  }
+}
+
+function openBackendSwitcher() {
+  ensureCurrentSaved();
+  renderBackendList();
+  document.getElementById('backendSwitcherModal').classList.add('show');
+}
+
+function renderBackendList() {
+  const cur = getCurrentBackendUrl();
+  const list = getSavedBackends();
+  const el = document.getElementById('savedBackendsList');
+  if (list.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:8px 0">No saved backends</div>';
+    return;
+  }
+  el.innerHTML = list.map((b, i) => {
+    const isCur = b.url === cur;
+    const label = b.label || new URL(b.url).hostname;
+    return '<div class="saved-backend-item' + (isCur ? ' current' : '') + '">' +
+      '<span class="be-dot"></span>' +
+      '<span class="be-url" onclick="goToBackend(\'' + escHtml(b.url) + '\')" title="' + escHtml(b.url) + '">' + escHtml(label) + '</span>' +
+      (isCur ? '<span style="font-size:11px;color:var(--accent)">(current)</span>' : '') +
+      (!isCur ? '<button class="be-remove" onclick="removeBackend(' + i + ')" title="Remove">&times;</button>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function addAndGoBackend() {
+  let url = document.getElementById('newBackendUrl').value.trim();
+  if (!url) return;
+  // Ensure https:// prefix
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  // Strip trailing slash
+  url = url.replace(/\/+$/, '');
+  const list = getSavedBackends();
+  if (!list.some(b => b.url === url)) {
+    list.push({ url: url, label: '' });
+    saveSavedBackends(list);
+  }
+  goToBackend(url);
+}
+
+function removeBackend(index) {
+  const list = getSavedBackends();
+  list.splice(index, 1);
+  saveSavedBackends(list);
+  renderBackendList();
+}
+
+function goToBackend(url) {
+  if (url === getCurrentBackendUrl()) {
+    closeModal('backendSwitcherModal');
+    return;
+  }
+  window.location.href = url;
+}
+
+async function updateBackendIndicator() {
+  const dot = document.getElementById('backendDot');
+  const label = document.getElementById('backendLabel');
+  try {
+    const res = await fetch('/api/status');
+    const d = await res.json();
+    dot.classList.remove('offline');
+    const host = window.location.hostname;
+    label.textContent = host + ' (v' + (d.backend_version || '?') + ')';
+  } catch (_) {
+    dot.classList.add('offline');
+    label.textContent = window.location.hostname + ' (offline)';
+  }
+}
+
+// --- Init ---
+updateBackendIndicator();
+checkSession();
+setInterval(() => {
+  if (!loggedIn) return;
+  if (currentPage === 'status') loadStatus();
+  if (currentPage === 'servers') loadServers();
+}, 15000);
+</script>
+</body>
+</html>

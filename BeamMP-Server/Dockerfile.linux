@@ -1,0 +1,34 @@
+FROM debian:12 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+
+RUN apt-get update -y && \
+    apt-get install -y liblua5.3-0 liblua5.3-dev curl zip unzip tar cmake make git g++ ninja-build pkg-config
+
+WORKDIR /src
+COPY . .
+
+RUN git init && \
+    git config user.email "build@local" && \
+    git config user.name "build" && \
+    git add -A && \
+    git commit -m "build" --allow-empty && \
+    git config --global --add safe.directory /src && \
+    git config --global --add safe.directory /src/vcpkg
+
+RUN ./vcpkg/bootstrap-vcpkg.sh
+
+RUN cmake . -B bin \
+    -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_FLAGS="-O3 -g -Wl,-z,norelro -Wl,--hash-style=gnu -Wl,-z,noseparate-code -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--export-dynamic" \
+    -DBeamMP-Server_ENABLE_LTO=ON
+
+RUN cmake --build bin --parallel -t BeamMP-Server
+
+RUN strip -s bin/BeamMP-Server
+
+FROM debian:12-slim
+COPY --from=builder /src/bin/BeamMP-Server /BeamMP-Server.debian.12.x86_64
+CMD ["cp", "/BeamMP-Server.debian.12.x86_64", "/output/"]

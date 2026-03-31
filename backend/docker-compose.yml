@@ -1,0 +1,14 @@
+services:
+  beammp-backend:
+    build: .
+    container_name: beammp-backend
+    restart: unless-stopped
+    ports:
+      - "8420:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      - LAUNCHER_VERSION=2.7.0
+      - SERVER_VERSION=3.9.1
+      - ADMIN_KEY=${ADMIN_KEY:-changeme-admin-key}
+      - DATA_DIR=/data

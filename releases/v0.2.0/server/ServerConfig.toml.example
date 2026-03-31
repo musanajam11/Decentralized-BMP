@@ -1,0 +1,17 @@
+# BeamMP Server Configuration
+# Copy this file to ServerConfig.toml and fill in your values
+
+[General]
+Name = "My BeamMP Server"
+Port = 30814
+AuthKey = "paste-your-server-auth-key-here"
+MaxPlayers = 10
+Map = "/levels/gridmap_v2/info.json"
+Description = "A self-hosted BeamMP server"
+Private = false
+MaxCars = 1
+LogChat = true
+Tags = ""
+# The URL of the backend server to use for authentication, server list, and heartbeat.
+# Change this to point at a different backend.
+BackendUrl = "https://backend.yourdomain.xyz"

@@ -1,0 +1,6 @@
+*.json
+builds/
+*.exe
+*.zip
+.env
+__pycache__/

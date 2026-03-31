@@ -1,0 +1,11 @@
+build/
+bin/
+.vs/
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.log
+vcpkg/buildtrees/
+vcpkg/downloads/
+vcpkg/packages/
