@@ -58,6 +58,10 @@ The backend includes a built-in web dashboard for login, live server status, pla
 
 ![Backend downloads page](docs/screenshots/downloads.png)
 
+### Admin Controls
+
+![Backend admin controls](docs/screenshots/admin.png)
+
 ## Quick Start
 
 ### 1. Deploy the Backend
