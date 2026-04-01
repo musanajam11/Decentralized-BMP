@@ -25,6 +25,7 @@ BeamMP-Server/build/
 vcpkg/buildtrees/
 vcpkg/downloads/
 vcpkg/packages/
+vcpkg_installed/
 
 # === IDE / Editor ===
 .vs/
@@ -38,6 +39,17 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
+# Top-level build outputs
+build/
+Release/
+CMakeCache.txt
+
+# Node
+node_modules/
+
+# JetBrains
+.idea/
+
 # === Docker ===
 backend/data/
 backend/builds/
@@ -47,3 +59,5 @@ releases/**/backend/builds/
 # === Secrets ===
 .env
 !.env.example
+backend/.env
+*.log
