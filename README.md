@@ -40,6 +40,24 @@ While security is a priority in this implementation, running a backend open to h
 | [releases/](releases/) | — | Pre-packaged release bundles with configs and binaries |
 | [legal/](legal/) | — | AGPL-3.0 compliance documentation and third-party notices |
 
+## Web UI Screenshots
+
+The backend includes a built-in web dashboard for login, live server status, player counts, and patched build downloads.
+
+> Place the UI images in `docs/screenshots/` using the filenames below to have them render on GitHub.
+
+### Login Screen
+
+![Backend login screen](docs/screenshots/login.png)
+
+### Status Dashboard
+
+![Backend status dashboard](docs/screenshots/dashboard.png)
+
+### Downloads / Patching Page
+
+![Backend downloads page](docs/screenshots/downloads.png)
+
 ## Quick Start
 
 ### 1. Deploy the Backend
