@@ -44,6 +44,9 @@ build/
 Release/
 CMakeCache.txt
 
+# Generated release bundles
+releases/**/*.zip
+
 # Node
 node_modules/
 
