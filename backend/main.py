@@ -1349,7 +1349,7 @@ async def create_key_api(request: Request):
         return JSONResponse({"success": False, "message": f"User '{owner}' not found"}, status_code=404)
 
     created_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    if not db_create_key(key, server_name, owner, admin, created_at):
+    if not db_create_key(key, server_name, owner, admin["username"], created_at):
         return JSONResponse({"success": False, "message": "Failed to create key"}, status_code=500)
     return JSONResponse({"success": True, "auth_key": key, "server_name": server_name, "owner": owner})
 
