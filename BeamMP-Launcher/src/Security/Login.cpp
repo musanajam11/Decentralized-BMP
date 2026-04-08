@@ -11,6 +11,7 @@
 
 #include "Http.h"
 #include "Logger.h"
+#include "Network/network.hpp"
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
